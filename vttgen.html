@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic WebVTT Generator</title>
+</head>
+<body>
+    <script>
+        // Function to get URL parameters
+        function getUrlParameter(name) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(name);
+        }
+
+        // Main function to generate the VTT content
+        function generateVTT() {
+            // Get parameters from URL
+            const img1 = getUrlParameter('img1');
+            const width = parseInt(getUrlParameter('w'), 10);
+            const height = parseInt(getUrlParameter('h'), 10);
+            const interval = parseInt(getUrlParameter('interval'), 10);
+            const rows = parseInt(getUrlParameter('r'), 10);
+            const cols = parseInt(getUrlParameter('c'), 10);
+
+            // Ensure all parameters are provided
+            if (!img1 || !width || !height || !interval || !rows || !cols) {
+                document.body.innerHTML = "Missing required parameters.";
+                return;
+            }
+
+            // Generate WebVTT content
+            let vttContent = "WEBVTT\n\n";
+            let x = 0;
+            let y = 0;
+            let currentTime = 0;
+            let spriteIndex = 0;
+
+            for (let row = 0; row < rows; row++) {
+                for (let col = 0; col < cols; col++) {
+                    const nextTime = currentTime + interval;
+                    vttContent += `${new Date(currentTime * 1000).toISOString().substr(11, 8)}.000 --> ${new Date(nextTime * 1000).toISOString().substr(11, 8)}.000\n`;
+                    vttContent += `${img1}#xywh=${x},${y},${width},${height}\n\n`;
+
+                    // Move to the next sprite position
+                    x += width;
+                    currentTime = nextTime;
+                    spriteIndex++;
+
+                    // Check if we've reached the end of a row
+                    if (spriteIndex % cols === 0) {
+                        x = 0; // Reset x position to the start of the next row
+                        y += height; // Move to the next row
+                    }
+                }
+            }
+
+            // Set the MIME type to 'text/vtt' so it can be used directly as a VTT file
+            const blob = new Blob([vttContent], { type: 'text/vtt' });
+            const vttUrl = URL.createObjectURL(blob);
+
+            // Automatically redirect to the VTT file content
+            window.location = vttUrl;
+        }
+
+        // Call the function to generate and redirect to the VTT
+        generateVTT();
+    </script>
+</body>
+</html>
